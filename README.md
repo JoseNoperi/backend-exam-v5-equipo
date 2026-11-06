@@ -57,3 +57,35 @@ run_steps.py       # reproduce los 20 pasos
 requirements.txt
 EXAM.md            # resultados y bitácora de IA
 ```
+
+## Probar contra el servidor encendido
+
+Con la API corriendo en el puerto 8000, en otra terminal:
+
+```bash
+# Reiniciar los datos (204)
+curl -i -X POST http://localhost:8000/api/_reset
+
+# Paso 1: total de habitaciones (X-Total-Count: 145)
+curl -i "http://localhost:8000/api/rooms?limit=5"
+
+# Paso 3: límite fuera de rango (422)
+curl -i "http://localhost:8000/api/rooms?limit=101"
+
+# Paso 5: crear habitación (201, id 146, con Location)
+curl -i -X POST http://localhost:8000/api/rooms \
+  -H "Content-Type: application/json" \
+  -d '{"parent_id": 2, "title": "Nuevo", "quantity": 4, "code": "NEW-1"}'
+
+# Paso 11: PATCH no soportado (405)
+curl -i -X PATCH http://localhost:8000/api/rooms/1 \
+  -H "Content-Type: application/json" -d '{"quantity": 9}'
+
+# Paso 20: CORS con el origen permitido (204 + Access-Control-Allow-Origin)
+curl -i -X OPTIONS http://localhost:8000/api/rooms \
+  -H "Origin: http://localhost:3000" \
+  -H "Access-Control-Request-Method: POST"
+```
+
+Los 20 pasos completos se ejecutan de una vez con `python run_steps.py`.
+Documentación interactiva: http://localhost:8000/docs
